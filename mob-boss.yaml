@@ -7,18 +7,9 @@ rule-download:
 
 system-config:
 #   temp-dir must be fully qualified
-    temp-dir: /tmp/mob-boss
-    git-dir: /home/dbogenre/Documents/mob-boss-test
+    temp-dir: 
+    git-dir: 
 
-# Suricata location
-suricata-config:
-#   suricata-user: suricata
-#   suricata-loc: /usr/local/bin/suricata
-#   suricata-rules-dir: /usr/local/etc/suricata/rules/
-#   classification-file: /usr/local/etc/suricata/rules/classification.config
-#   reference-config-file: /usr/local/etc/suricata/rules/reference.config
-
-# need to come back to this and determine a methodology for adding or subtracting as ET creates or deletes them. Alert on mismatch?
 category-config:
 #   - botcc.portgrouped.rules
     - botcc.rules
