@@ -1,0 +1,75 @@
+# mob-boss general config
+---
+
+# Comment regarding selection of rules here.
+rule-download:
+    rule-url: http://rules.emergingthreats.net/open/suricata/emerging.rules.tar.gz
+
+system-config:
+#   temp-dir must be fully qualified
+    temp-dir: /tmp/mob-boss
+    git-dir: /home/dbogenre/Documents/mob-boss-test
+
+# Suricata location
+suricata-config:
+#   suricata-user: suricata
+#   suricata-loc: /usr/local/bin/suricata
+#   suricata-rules-dir: /usr/local/etc/suricata/rules/
+#   classification-file: /usr/local/etc/suricata/rules/classification.config
+#   reference-config-file: /usr/local/etc/suricata/rules/reference.config
+
+# need to come back to this and determine a methodology for adding or subtracting as ET creates or deletes them. Alert on mismatch?
+category-config:
+#   - botcc.portgrouped.rules
+    - botcc.rules
+#   - ciarmy.rules
+#   - compromised.rules
+#   - decoder-events.rules
+#   - drop.rules
+#   - dshield.rules
+#   - emerging-activex.rules
+#   - emerging-attack_response.rules
+#   - emerging-chat.rules
+    - emerging-current_events.rules
+#   - emerging-deleted.rules
+    - emerging-dns.rules
+#   - emerging-dos.rules
+    - emerging-exploit.rules
+    - emerging-ftp.rules
+#   - emerging-games.rules
+#   - emerging-icmp.rules
+#   - emerging-icmp_info.rules
+#   - emerging-imap.rules
+#   - emerging-inappropriate.rules
+    - emerging-info.rules
+    - emerging-malware.rules
+#   - emerging-misc.rules
+    - emerging-mobile_malware.rules
+#   - emerging-netbios.rules
+#   - emerging-p2p.rules
+    - emerging-policy.rules
+#   - emerging-pop3.rules
+#   - emerging-rpc.rules
+#   - emerging-scada.rules
+#   - emerging-scan.rules
+#   - emerging-shellcode.rules
+    - emerging-smtp.rules
+#   - emerging-snmp.rules
+    - emerging-sql.rules
+    - emerging-telnet.rules
+#   - emerging-tftp.rules
+    - emerging-trojan.rules
+#   - emerging-user_agents.rules
+#   - emerging-voip.rules
+#   - emerging-web_client.rules
+    - emerging-web_server.rules
+#   - emerging-web_specific_apps.rules
+    - emerging-worm.rules
+    - files.rules
+    - http-events.rules
+#   - rbn-malvertisers.rules
+#   - rbn.rules
+#   - smtp-events.rules
+#   - stream-events.rules
+    - tls-events.rules
+#   - tor.rules
