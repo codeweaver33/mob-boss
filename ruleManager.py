@@ -3,7 +3,9 @@ import requests
 import tarfile
 import re
 import glob
+import csv
 import shutil
+import fileinput
 
 
 class ruleManager:
@@ -23,10 +25,7 @@ class ruleManager:
 		self.getNewRules()
 		self.extract()
 		self.mergeCategories()
-		self.purgeOld()
-		self.etDisables()
 		self.updateRuleState()
-		self.applyCustomDisables()
 		self.moveRules()
 		self.callReporter()
 		self.gitPush()
@@ -119,254 +118,70 @@ class ruleManager:
 		print("Rule merge complete.")
 		f.close()
 
-
-	def purgeOld(self):
-		print("Purging old rules from rule_state.conf. This may take a bit.")
-		sysConfig = self.cp.getSystemConfig()
-		tmpDir = sysConfig["temp-dir"]
-		gitDir = sysConfig["git-dir"]
-		ruleStateOld = []
-		rulesNew = []
-		ruleStateNew = []
-
-		if os.path.isfile(gitDir + "/rule_state.conf"):
-			f = open((gitDir + "/rule_state.conf"), "r")
-		else:
-			f = open((gitDir + "/rule_state.conf"), "w")
-			f.write("sid,state,name\n")
-			f.close()
-			f = open((gitDir + "/rule_state.conf"), "r")
-		#put rule_state.conf in memory as a list
-		for line in f:
-			ruleStateOld.append(line)
-		f.close()
-		#split list into list of lists
-		i = 0
-		while i < len(ruleStateOld):
-			ruleStateOld[i] = ruleStateOld[i].split(",")
-			i = i + 1
-		#read in the new all.rules file
-		f = open((tmpDir + "/rules-new/all.rules-new"), "r")
-		for line in f:
-			rulesNew.append(line)
-		f.close()
-		sidLookupList = []
-		x = ""
-		#create a lookup list of sids in rulesNew for efficiency
-		for line in rulesNew:
-			if not line == "":
-				x = re.search(r'; sid:[0-9]*', line)
-				if not x == None:
-					x = x.group(0).strip("; sid:")
-					sidLookupList.append(x)
-		
-
-		#Add in headers
-		ruleStateNew.append(ruleStateOld[0][0] + "," + ruleStateOld[0][1] + "," + ruleStateOld[0][2])
-
-		#for each element in ruleStateOld
-		for element in ruleStateOld:
-			#check if it is header
-			if not element[0] == "sid":
-				#for each element check if the sid is in the sidLookupList
-				if element[0] in sidLookupList:
-					ruleStateNew.append(element[0] + "," + element[1] + "," + element[2])
-
-		#write the new rulestate to file
-		f = open((gitDir + "/rule_state.conf"), "w")
-		for line in ruleStateNew:
-			if not line[len(line)-1] == "\n":
-				line = line + "\n"
-			f.write(line)
-
-		f.close()
-
-
-	def etDisables(self):
-		print("Processing disables.")
-		sysConfig = self.cp.getSystemConfig()
-		tmpDir = sysConfig["temp-dir"]
-		gitDir = sysConfig["git-dir"]
-		ruleStateOld = []
-		sidLookupList = []
-
-		#continual read ins/write outs of the rule_state are to ensure that if the process breaks along the way the file will still be intact
-		f = open((gitDir + "/rule_state.conf"), "r")
-
-		#read in rule_state.conf as a list of lists
-		for line in f:
-			ruleStateOld.append(line.split(","))
-		f.close()
-
-		f = open((tmpDir + "/rules-new/all.rules-new"), "r")
-		
-		# create a new lookup list with sid disables
-		for line in f:
-			if line.find("#") == 0:
-				x = re.search(r'; sid:[0-9]*', line)
-				if not x == None:
-					x = x.group(0).strip("; sid:")
-					sidLookupList.append(x)
-		
-		#go through and apply diables to rule_state.conf
-		for element in ruleStateOld:
-			if element[0] in sidLookupList:
-				element[1] = "0"
-
-		f = open((gitDir + "/rule_state.conf"), "w")
-		for element in ruleStateOld:
-			f.write(element[0] + "," + element[1] + "," + element[2])
-
-		f.close()
-
-
-
 	def updateRuleState(self):
 		print("Updating rule_state.conf with new rules.")
+
+		# Read in the system configuration from config
 		sysConfig = self.cp.getSystemConfig()
-		tmpDir = sysConfig["temp-dir"]
-		gitDir = sysConfig["git-dir"]
-		ruleStateOld = []
-		ruleStateOldLookupList = []
-		sidLookupList = []
-		newRules = []
 
-		f = open((gitDir + "/rule_state.conf"), "r")
-		#read in rule_state.conf into list of lists
-		for line in f:
-			ruleStateOld.append(line.split(","))
-		f.close()
+		# Catch first-run
+		try:
 
-		x = ""
-		f = open((tmpDir + "/rules-new/all.rules-new"), "r")
-		#read in sids for lookup list of new sids
-		for line in f:
-			if not line.find("#") == 0 and not line == "":
-				x = re.search(r'; sid:[0-9]*', line)
-				if not x == None:
-					x = x.group(0).strip("; sid:")
-					sidLookupList.append(x)
-		f.close()
-		#making a new list with same lookuplist structure
-		for element in ruleStateOld:
-			ruleStateOldLookupList.append(element[0])
+			# Open the old ruleState first
+			with open(sysConfig["git-dir"] + "/rule_state.conf", 'r', newline='') as ruleStateFile:
 
-		#check to see which sids are not in the rule_state.conf
-		for element in sidLookupList:
-			if element not in ruleStateOldLookupList:
-				newRules.append(element)
+				# Use the builtin csv class reader
+				ruleStateReader = csv.DictReader(ruleStateFile)
 
-		f = open((tmpDir + "/rules-new/all.rules-new"), "r")
-		x = ""
-		y = ""
-		#add new rule into rule_state.conf
-		#for each element in the newRules sid list
-		for element in newRules:
-			#for each line in the all.rules-new file
-			for line in f:
-				#ensure it is not disabled or a comment
-				if not line.find("#") == 0:
-					#find the sid
-					pattern = "; sid:" + element
-					x = re.search(pattern, line)
-					#If sid was found
-					if not x == None:
-						#search for the msg field which contains value for the last column of rule_state.conf
-						pattern = "\(msg:\"[A-Za-z0-9 \.\-\_\(\\)\|\/\+\,\?\=]*\";"
-						y = re.search(pattern, line)
-						#if found add a new entry to the ruleStateOld list
-						if not y == None:
-							#strip leading and trailing characters
-							y = y.group(0).lstrip("(msg:\"").rstrip("\";").replace(",", "").replace("\"", "")
-							if "," in y:
-								print(y)
-							y = y + "\n"
-							newEle = [element, "1", y]
-							ruleStateOld.append(newEle)
-
-		f.close()
-
-		f = open((gitDir + "/rule_state.conf"), "w")
-
-		for element in ruleStateOld:
-			f.write(element[0] + "," + element[1] + "," + element[2])
-		f.close()
-
+				# Read state into memory as a dictionary by sid
+				ruleState = dict((rule["sid"], rule["state"]) for rule in ruleStateReader)
 		
+		# Catch file not existing
+		except FileNotFoundError:
+			ruleState = {}
 
+		# Open the rule_state and close it
+		with open(sysConfig["git-dir"] + "/rule_state.conf", 'w', newline='') as ruleStateFile:
 
+			# Use the builtin csv class writer to write to the file
+			ruleStateWriter = csv.writer(ruleStateFile)
 
-	def applyCustomDisables(self):
-		print("Applying Custom Disables.")
-		sysConfig = self.cp.getSystemConfig()
-		tmpDir = sysConfig["temp-dir"]
-		gitDir = sysConfig["git-dir"]
-		ruleState = []
-		rulesNew = []
-		rulesNewSids = []
+			# Write the headers
+			ruleStateWriter.writerow(['sid', 'state', 'name'])
 
-		f = open((gitDir + "/rule_state.conf"), "r")
-		#read in rule_state.conf into list of lists
-		for line in f:
-			ruleState.append(line.split(","))
-		f.close()
-
-		#read in all.rules-new file
-		f = open((tmpDir + "/rules-new/all.rules-new"), "r")
-		for line in f:
-			rulesNew.append(line)
-		f.close()
-
-		
-		x = ""
-		#create sid reference list for all-rules.new
-		for element in rulesNew:
-			#filter out comments/already disabled
-			if not element.find("#") == 0:
-				#find the sid
-				pattern = "; sid:[0-9]*;"
-				x = re.search(pattern, element)
-				#if an sid is found, add it into rulesNewSids with an enabled value
-				if not x == None:
-					rulesNewSids.append([x.group(0).lstrip("; sid:").rstrip(";"), "1"])
-		#for every element in the ruleState list
-		for element in ruleState:
-			#if that sid is disabled
-			if element[1] == "0":
-				#for every item in rulesNewSids
-				i = 0
-				while i < len(rulesNewSids):
-					#if the sid matches the disabled sid set that rule to disabled
-					if rulesNewSids[i][0] == element[0]:
-						rulesNewSids[i][1] = "0"
-					i = i + 1
-		
-		x = ""
-		# for every element in rulesNewSids
-		for element in rulesNewSids:
-			#if the element is set to disabled
-			if element[1] == "0":
-				#iterate through rulesNew for sids
-				i = 0
-				while i < len(rulesNew):
-					#filter out those that are comments or already disabled
-					if not rulesNew[i].find("#") == 0:
-						#search for the sid
-						pattern = "; sid:[0-9]*;"
-						x = re.search(pattern, rulesNew[i])
-						# if found break to just sid
-						if not x == None:
-							x = x.group(0).lstrip("; sid:").rstrip(";")
-							if x == element[0]:
-								rulesNew[i] = "#" + rulesNew[i]
-					i = i + 1
-
-		f = open((tmpDir + "/rules-new/all.rules-new"), "w")
-
-		for line in rulesNew:
-			f.write(line)
-
-		f.close()
+			# Loop each line in all.rules
+			for line in fileinput.input((sysConfig["temp-dir"] + "/rules-new/all.rules-new"), inplace=True):
+				# Ignore empty and whitespace lines, no changes needed
+				if not line or line.isspace():
+					print(line) # Write as-is
+					continue
+				# Get the sid
+				sid = re.search("sid:(\d+);", line)
+				# If we didn't find an sid
+				if not sid:
+					print(line) # Write as-is
+					continue
+				# Extract the sid
+				sid = sid.group(1)
+				# Grab the state from ET
+				state = 0 if line.startswith('#') else 1
+				# If we have an rule_state value to disable the sid
+				if sid in ruleState and ruleState[sid] == 0:
+					# Over-ride the ET value
+					state = 0
+					# Mark that we need to append this line
+					disabledLines.append(i)
+					# Write the rule as disabled
+					print("#"+ line)
+				# No over-ride
+				else:
+					print(line) # Write as-is
+				# Write the row
+				ruleStateWriter.writerow([
+					sid, 
+					state,
+					re.search("msg:\"([^\"]+)\";", line).group(1)
+				])
 
 	#May be added in later
 	#def processFlowbits(self):

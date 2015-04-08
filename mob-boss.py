@@ -26,7 +26,6 @@ def main():
 
 	# The path to the configuration file
 	parser.add_argument('-c', '--config', required=True)
-	parser.add_argument('--initial', action='store_true', help="Use for first time run.")
 
 	# Parse the args from the command line input
 	args = parser.parse_args()
@@ -43,9 +42,5 @@ def main():
 	# Call Rule Manager for Build Process
 	rm.build()
 
-	# If initial run generate RuleState
-	if args.initial:
-		subprocess.call(("python3 generateRuleState.py " + cp.getSystemConfig()["git-dir"] + "/all.rules " + cp.getSystemConfig()["git-dir"] + "/rule_state.conf"), shell=True)
-		gm.push(cp.getSystemConfig()["git-dir"], "rule_state.conf")
 if __name__ == "__main__":
 	main()
