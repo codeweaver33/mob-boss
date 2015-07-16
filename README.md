@@ -24,7 +24,6 @@ Setup
 
 4) Configure the mob-boss.yaml file with the appropriate configurations for your organization. You will need to provide the github urls that will be used by mob-boss for the CVS tracking of the rules. You will also need to enable/disable the categories that you wish for suricata to use. Also provide the url to the rules download location, and the temp-dir that you created in step 3.
 
-5) When you run mob-boss for the first time the rule_state.conf file will be created, but it will not be populated correctly. You will need to run generateRuleState.py providing it with the path to the all.rules file as well as where you want the rule\_state.conf file to be output. This will create a properly formatted and fully populated rule_state.conf file.
 
 Usage
 -----
