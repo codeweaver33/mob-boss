@@ -6,6 +6,7 @@ import glob
 import csv
 import shutil
 import fileinput
+import sys
 
 
 class ruleManager:
@@ -79,22 +80,29 @@ class ruleManager:
 		#gitDir = sysConfig["git-dir"]
 
 		#Pull down tarball from rule download location
-		r = requests.get(ruleUrl, stream=True)
-		f = open((tmpDir + "/rules.tar.gz"), "wb")
-		for chunk in r.iter_content(chunk_size=1024):
-			if chunk: #filters out keep-alive new chunks
-				f.write(chunk)
-				f.flush()
-		f.close()
+		try:
+			r = requests.get(ruleUrl, stream=True)
+			f = open((tmpDir + "/rules.tar.gz"), "wb")
+			for chunk in r.iter_content(chunk_size=1024):
+				if chunk: #filters out keep-alive new chunks
+					f.write(chunk)
+					f.flush()
+			f.close()
+		except Exception as e:
+			print(e)
+			sys.exit(0)
 
 	def extract(self):
 		print("Extracting rules from tarball.")
 		sysConfig = self.cp.getSystemConfig()
 		tmpDir = sysConfig["temp-dir"]
-
-		f = tarfile.open((tmpDir + "/rules.tar.gz"), "r:gz")
-		f.extractall(path=tmpDir+"/rules/")
-		f.close()
+		try:
+			f = tarfile.open((tmpDir + "/rules.tar.gz"), "r:gz")
+			f.extractall(path=tmpDir+"/rules/")
+			f.close()
+		except Exception as e:
+			print("Error occured in extracting tarball. Ensure that downloaded file is in fact a valid rules.tar.gz file. Error output: " + str(e))
+			sys.exit(0)
 
 
 	def mergeCategories(self):
@@ -150,32 +158,31 @@ class ruleManager:
 			ruleStateWriter.writerow(['sid', 'state', 'name'])
 
 			# Loop each line in all.rules
-			for line in fileinput.input((sysConfig["temp-dir"] + "/rules-new/all.rules-new"), inplace=True):
+			for line in fileinput.input(sysConfig["temp-dir"] + "/rules-new/all.rules-new", inplace=True):
+
 				# Ignore empty and whitespace lines, no changes needed
 				if not line or line.isspace():
-					print(line) # Write as-is
+					print(line, end='') # Write as-is
 					continue
 				# Get the sid
 				sid = re.search("sid:(\d+);", line)
 				# If we didn't find an sid
 				if not sid:
-					print(line) # Write as-is
+					print(line, end='') # Write as-is
 					continue
 				# Extract the sid
 				sid = sid.group(1)
 				# Grab the state from ET
-				state = 0 if line.startswith('#') else 1
+				state = '0' if line.startswith('#') else '1'
 				# If we have an rule_state value to disable the sid
-				if sid in ruleState and ruleState[sid] == 0:
+				if sid in ruleState and ruleState[sid] == '0' and state != '0':
 					# Over-ride the ET value
-					state = 0
-					# Mark that we need to append this line
-					disabledLines.append(i)
+					state = '0'
 					# Write the rule as disabled
-					print("#"+ line)
+					print("#" + line, end='')
 				# No over-ride
 				else:
-					print(line) # Write as-is
+					print(line, end='') # Write as-is
 				# Write the row
 				ruleStateWriter.writerow([
 					sid, 
