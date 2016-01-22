@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # 
 # Suricata Rule Management
-# Authors: Dillon Bogenreif, Luke Young, Brandon Lattin
+# Authors: Dillon Bogenreif, Luke Young
+# Design Help: Brandon Lattin
 
 import sys
 import argparse
