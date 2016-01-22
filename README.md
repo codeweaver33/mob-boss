@@ -22,7 +22,7 @@ Setup
 1) Clone this repository onto the target machine that will be running it.
 
 
-2) Create a github repo that will be used for CVS tracking of the rule changes. You will also use this git repo to make edits to the rule_state.conf file. Clone this repo onto the same machine(s) that will be running mob-boss in the loaction of your choosing. This repo will be where the all.rules file will be output by mob-boss.
+2) Create a github repo that will be used for version control tracking of the rule changes. You will also use this git repo to make edits to the rule_state.conf file. Clone this repo onto the same machine(s) that will be running mob-boss in the loaction of your choosing. This repo will be where the all.rules file will be output by mob-boss.
 
 3) Create a tmp dir that mob-boss will use as scratch space. It is recommended that you create this in /var/tmp/[somedir]. You will want this directory to persist across reboots.
 
