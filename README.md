@@ -1,7 +1,7 @@
 mob-boss
 ========
 
-mob-boss is a rule management tool for Surricata expecially in clustered environments. It is used to pull down rules from a designated source (such as ET Pro) and parse them for use by Suricata IDS. mob-boss uses a configuration file (mob-boss.yaml) to set run options such as categories, github urls, and rule urls. mob-boss leverages github as its version control system. mob-boss also comes with rule_state.conf file which is a human readable file used for easily disabling/enabling sets of rules.
+mob-boss is a rule management tool for Surricata especially in clustered environments. It is used to pull down rules from a designated source (such as ET Pro) and parse them for use by Suricata IDS. mob-boss uses a configuration file (mob-boss.yaml) to set run options such as categories, github urls, and rule urls. mob-boss leverages github as its version control system. mob-boss also comes with rule_state.conf file which is a human readable file used for easily disabling/enabling sets of rules.
 
 mob-boss can be used in clustered environments in combination with cron and git to keep rules synced across sensors. You can have a management host run mob-boss and then have the sensors periodically perform git pulls to pull down any changes to the rules that have come off of the management host.
 
