@@ -21,7 +21,7 @@ class gitManager:
 
 	def pull(self, directory):
 		try:
-			subprocess.call(("git pull"), shell=True, cwd=directory)
+			subprocess.call(("git pull --quiet"), shell=True, cwd=directory)
 		except Exception as e:
 			print("Error occured in Git Manager pull: " + str(e))
 			print("Halting execution.")
@@ -38,13 +38,13 @@ class gitManager:
 				print("Halting execution.")
 				exit(0)
 		try:
-			subprocess.call(("git commit -m \"Automated commit from mob-boss.\""), shell=True, cwd=directory)
+			subprocess.call(("git commit --quiet -m \"Automated commit from mob-boss.\""), shell=True, cwd=directory)
 		except Exception as e:
 			print("Error occured in Git Manager commit: " + str(e))
 			print("Halting execution.")
 			exit(0)
 		try:
-			subprocess.call(("git push"), shell=True, cwd=directory)
+			subprocess.call(("git push --quiet"), shell=True, cwd=directory)
 		except Exception as e:
 			print("Exception occured in Git Manager push: " + str(e))
 			print("Halting execution.")
