@@ -37,7 +37,6 @@ class ruleManager:
 		self.initTmp()
 		self.gitPull()
 		self.initReports()
-		self.migrateOldRules()
 		self.getNewRules()
 		self.extract()
 		self.mergeCategories()
@@ -79,9 +78,9 @@ class ruleManager:
 		sysConfig = self.cp.getSystemConfig()
 		tmpDir = sysConfig["temp-dir"]
 		gitDir = sysConfig["git-dir"]
-		print("Moving old rules to " + tmpDir + "/rules-old/all.rules.")
+		print("Copying old rules to " + tmpDir + "/rules-old/all.rules.")
 		if os.path.isfile((gitDir + "/all.rules")):
-			self.fm.mvFile((gitDir + "/all.rules"),(tmpDir + "/rules-old/all.rules"))
+			self.fm.cpFile((gitDir + "/all.rules"), (tmpDir + "/rules-old/all.rules"))
 		#if os.path.isfile((gitDir + "/local.rules")):
 		#	self.fm.mvFile((gitDir + "/local.rules"),(tmpDir + "/rules-old/local.rules"))
 
@@ -215,7 +214,7 @@ class ruleManager:
 		gitDir = sysConfig["git-dir"]
 
 		os.rename((tmpDir + "/rules-new/all.rules-new"), (tmpDir + "/rules-new/all.rules"))
-		self.fm.mvFile((gitDir + "/all.rules"), (tmpDir + "/rules-old/all.rules"))
+		self.migrateOldRules()
 		self.fm.cpFile((tmpDir + "/rules-new/all.rules"), (gitDir + "/all.rules"))
 
 		for file in glob.glob(tmpDir + "/rules/rules/*.map"):
